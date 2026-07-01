@@ -6,882 +6,723 @@
 <meta name="theme-color" content="#0a0a0a">
 <title>CR Viewer</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-  :root{
-    --bg:#0a0a0a;
-    --panel:#141414;
-    --panel-2:#1c1c1c;
-    --line:#2a2a2a;
-    --text:#f0efe9;
-    --text-dim:#8a8a85;
-    --amber:#e8b339;
-    --amber-dim:#7a5e1f;
-    --danger:#c0473a;
-    --ok:#5a9e6f;
-    --radius:10px;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
-  html,body{
-    height:100%; margin:0; background:var(--bg); color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    overflow:hidden; overscroll-behavior:none;
-  }
-  #app{height:100%; display:flex; flex-direction:column;}
+:root{
+  --bg:#0a0a0a; --panel:#141414; --panel2:#1c1c1c; --line:#2a2a2a;
+  --text:#f0efe9; --dim:#8a8a85; --amber:#e8b339; --amberdim:#7a5e1f;
+  --danger:#c0473a; --ok:#5a9e6f; --r:10px;
+  --st: env(safe-area-inset-top,0px); --sb: env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  overflow:hidden;overscroll-behavior:none;}
+#app{height:100%;display:flex;flex-direction:column;}
 
-  /* ---------- TOP BAR ---------- */
-  .topbar{
-    flex:0 0 auto;
-    padding-top:calc(10px + var(--safe-top));
-    padding:calc(10px + var(--safe-top)) 14px 10px;
-    display:flex; align-items:center; justify-content:space-between;
-    background:var(--panel); border-bottom:1px solid var(--line);
-  }
-  .brand{display:flex; align-items:center; gap:10px;}
-  .brand-mark{
-    width:26px; height:26px; border:2px solid var(--amber); border-radius:4px;
-    display:flex; align-items:center; justify-content:center; flex:0 0 auto;
-  }
-  .brand-mark::after{content:""; width:6px; height:6px; background:var(--amber); border-radius:50%;}
-  .brand-text{font-size:15px; font-weight:600; letter-spacing:0.02em;}
-  .brand-sub{font-size:11px; color:var(--text-dim); margin-top:1px;}
-  .conn-dot{width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex:0 0 auto;}
-  .conn-dot.ok{background:var(--ok); box-shadow:0 0 6px var(--ok);}
-  .conn-dot.bad{background:var(--danger);}
-  .topbar-right{display:flex; align-items:center; gap:10px;}
+/* TOPBAR */
+.topbar{flex:0 0 auto;padding:calc(10px + var(--st)) 14px 10px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--panel);border-bottom:1px solid var(--line);}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-mark{width:26px;height:26px;border:2px solid var(--amber);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.brand-mark::after{content:"";width:6px;height:6px;background:var(--amber);border-radius:50%;}
+.brand-text{font-size:15px;font-weight:600;}
+.brand-sub{font-size:11px;color:var(--dim);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);}
+.conn-dot.ok{background:var(--ok);box-shadow:0 0 6px var(--ok);}
+.conn-dot.bad{background:var(--danger);}
+.icon-btn{width:38px;height:38px;flex:0 0 auto;background:var(--panel2);
+  border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;
+  justify-content:center;color:var(--text);font-size:16px;}
 
-  /* ---------- VIEWS ---------- */
-  .view{flex:1 1 auto; min-height:0; display:none; flex-direction:column;}
-  .view.active{display:flex;}
+/* VIEWS */
+.view{flex:1 1 auto;min-height:0;display:none;flex-direction:column;}
+.view.active{display:flex;}
 
-  /* ---------- SETUP VIEW ---------- */
-  #view-setup{padding:18px; gap:14px; overflow-y:auto;}
-  .field-label{font-size:12px; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.06em;}
-  .field-input{
-    width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text);
-    padding:13px 14px; border-radius:var(--radius); font-size:16px; font-family:monospace;
-  }
-  .field-input:focus{outline:none; border-color:var(--amber);}
-  .btn{
-    border:none; border-radius:var(--radius); padding:14px 18px; font-size:15px; font-weight:600;
-    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-  }
-  .btn-primary{background:var(--amber); color:#1a1304;}
-  .btn-primary:active{background:#d3a02e;}
-  .btn-ghost{background:var(--panel-2); color:var(--text); border:1px solid var(--line);}
-  .btn-ghost:active{background:#242424;}
-  .setup-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px;}
-  .setup-note{font-size:12.5px; color:var(--text-dim); line-height:1.5; margin-top:10px;}
-  .setup-note b{color:var(--text);}
+/* SETUP */
+#view-setup{padding:18px;gap:14px;overflow-y:auto;}
+.field-label{font-size:12px;color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
+.field-input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+  padding:13px 14px;border-radius:var(--r);font-size:16px;font-family:monospace;}
+.field-input:focus{outline:none;border-color:var(--amber);}
+.btn{border:none;border-radius:var(--r);padding:14px 18px;font-size:15px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary{background:var(--amber);color:#1a1304;}
+.btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line);}
+.setup-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;}
+.setup-note{font-size:12.5px;color:var(--dim);line-height:1.5;margin-top:10px;}
+.setup-note b{color:var(--text);}
 
-  /* ---------- LIST VIEW ---------- */
-  #view-list{}
-  .list-toolbar{
-    flex:0 0 auto; padding:10px 14px; display:flex; gap:8px; align-items:center;
-    background:var(--panel); border-bottom:1px solid var(--line);
-  }
-  .search-input{
-    flex:1; background:var(--panel-2); border:1px solid var(--line); color:var(--text);
-    padding:10px 12px; border-radius:8px; font-size:14px;
-  }
-  .icon-btn{
-    width:40px; height:40px; flex:0 0 auto; background:var(--panel-2); border:1px solid var(--line);
-    border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--text);
-  }
-  .icon-btn:active{background:#242424;}
-  .order-list{flex:1; overflow-y:auto; padding:8px 10px;}
-  .order-card{
-    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
-    padding:13px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px;
-  }
-  .order-card:active{background:var(--panel-2);}
-  .order-thumb{
-    width:52px; height:52px; border-radius:6px; background:#000; flex:0 0 auto;
-    display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid var(--line);
-  }
-  .order-thumb img{width:100%; height:100%; object-fit:cover;}
-  .order-info{flex:1; min-width:0;}
-  .order-id{font-size:14.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .order-meta{font-size:12px; color:var(--text-dim); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .order-count{
-    flex:0 0 auto; background:var(--panel-2); color:var(--amber); font-size:13px; font-weight:700;
-    padding:5px 10px; border-radius:20px; border:1px solid var(--amber-dim);
-  }
-  .empty-state{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:40px; text-align:center;}
-  .empty-state .glyph{font-size:34px; opacity:0.4;}
-  .empty-state p{color:var(--text-dim); font-size:14px; max-width:260px; line-height:1.5;}
+/* LIST */
+.list-toolbar{flex:0 0 auto;padding:10px 14px;display:flex;gap:8px;align-items:center;
+  background:var(--panel);border-bottom:1px solid var(--line);}
+.search-input{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+  padding:10px 12px;border-radius:8px;font-size:14px;}
+.order-list{flex:1;overflow-y:auto;padding:8px 10px;}
+.order-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.order-card:active{background:var(--panel2);}
+.order-thumb{width:52px;height:52px;border-radius:6px;background:#000;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--line);}
+.order-thumb img{width:100%;height:100%;object-fit:cover;}
+.order-info{flex:1;min-width:0;}
+.order-id{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.order-meta{font-size:12px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.order-count{flex:0 0 auto;background:var(--panel2);color:var(--amber);font-size:13px;font-weight:700;
+  padding:5px 10px;border-radius:20px;border:1px solid var(--amberdim);}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:40px;text-align:center;}
+.empty-state .glyph{font-size:34px;opacity:.4;}
+.empty-state p{color:var(--dim);font-size:14px;max-width:260px;line-height:1.5;}
 
-  /* ---------- VIEWER VIEW ---------- */
-  #view-viewer{background:#000;}
-  .viewer-topbar{
-    flex:0 0 auto; padding:10px 12px; display:flex; align-items:center; gap:10px;
-    background:rgba(20,20,20,0.92); border-bottom:1px solid var(--line); z-index:5;
-  }
-  .viewer-title{flex:1; min-width:0;}
-  .viewer-title .vt-id{font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .viewer-title .vt-meta{font-size:11.5px; color:var(--text-dim);}
-  .canvas-wrap{
-    flex:1; min-height:0; position:relative; overflow:hidden;
-    display:flex; align-items:center; justify-content:center;
-    background:repeating-conic-gradient(#050505 0% 25%, #090909 0% 50%) 0 0/24px 24px;
-    touch-action:none;
-  }
-  #imgCanvas{
-    max-width:100%; max-height:100%; image-rendering:pixelated;
-  }
-  .wl-readout{
-    position:absolute; top:10px; left:10px; background:rgba(10,10,10,0.75);
-    border:1px solid var(--line); border-radius:8px; padding:7px 10px; font-size:11.5px;
-    font-family:monospace; color:var(--amber); pointer-events:none; line-height:1.6;
-  }
-  .wl-readout span{color:var(--text-dim);}
-  .nav-hint{
-    position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
-    background:rgba(10,10,10,0.75); border:1px solid var(--line); border-radius:20px;
-    padding:6px 14px; font-size:11.5px; color:var(--text-dim); pointer-events:none;
-    opacity:0; transition:opacity 0.3s;
-  }
-  .nav-hint.show{opacity:1;}
+/* VIEWER */
+#view-viewer{background:#000;}
+.viewer-topbar{flex:0 0 auto;padding:10px 12px;display:flex;align-items:center;gap:10px;
+  background:rgba(20,20,20,.95);border-bottom:1px solid var(--line);}
+.viewer-title{flex:1;min-width:0;}
+.vt-id{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vt-meta{font-size:11.5px;color:var(--dim);}
+.canvas-wrap{flex:1;min-height:0;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  background:#000;touch-action:none;}
+#imgCanvas{max-width:100%;max-height:100%;}
 
-  /* ---------- VIEWER BOTTOM TOOLBAR ---------- */
-  .viewer-toolbar{
-    flex:0 0 auto; padding:8px 10px calc(8px + var(--safe-bottom));
-    background:var(--panel); border-top:1px solid var(--line);
-    display:flex; align-items:center; gap:6px; overflow-x:auto;
-  }
-  .tool-btn{
-    flex:0 0 auto; min-width:58px; height:54px; background:var(--panel-2); border:1px solid var(--line);
-    border-radius:9px; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:3px; color:var(--text-dim);
-  }
-  .tool-btn .ti{font-size:18px; line-height:1;}
-  .tool-btn .tl{font-size:9.5px; letter-spacing:0.02em;}
-  .tool-btn.active{background:var(--amber-dim); border-color:var(--amber); color:var(--amber);}
-  .tool-btn:active{background:#242424;}
-  .tool-spacer{flex:1;}
+/* HUD overlay */
+.hud{position:absolute;top:10px;left:10px;background:rgba(10,10,10,.78);
+  border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:11px;
+  font-family:monospace;color:var(--amber);pointer-events:none;line-height:1.8;}
+.hud span{color:var(--dim);}
 
-  /* ---------- PRESET STRIP ---------- */
-  .preset-strip{
-    flex:0 0 auto; padding:8px 10px; display:flex; gap:6px; overflow-x:auto;
-    background:var(--panel); border-top:1px solid var(--line);
-  }
-  .preset-chip{
-    flex:0 0 auto; padding:8px 13px; border-radius:20px; background:var(--panel-2);
-    border:1px solid var(--line); font-size:12.5px; color:var(--text);
-  }
-  .preset-chip.active{background:var(--amber); color:#1a1304; border-color:var(--amber); font-weight:700;}
+/* PROCESSING PANEL */
+.proc-panel{flex:0 0 auto;background:var(--panel);border-top:1px solid var(--line);}
 
-  /* ---------- TOAST ---------- */
-  .toast{
-    position:fixed; bottom:calc(20px + var(--safe-bottom)); left:50%; transform:translateX(-50%) translateY(20px);
-    background:#1c1c1c; border:1px solid var(--line); color:var(--text); padding:11px 18px;
-    border-radius:10px; font-size:13.5px; z-index:100; opacity:0; transition:all 0.25s; pointer-events:none;
-    max-width:85vw; text-align:center;
-  }
-  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
-  .toast.error{border-color:var(--danger); color:#f0a89c;}
+/* preset strip */
+.preset-strip{padding:8px 10px;display:flex;gap:6px;overflow-x:auto;
+  border-bottom:1px solid var(--line);}
+.preset-strip::-webkit-scrollbar{display:none;}
+.preset-chip{flex:0 0 auto;padding:7px 13px;border-radius:20px;background:var(--panel2);
+  border:1px solid var(--line);font-size:12.5px;color:var(--text);white-space:nowrap;}
+.preset-chip.active{background:var(--amber);color:#1a1304;border-color:var(--amber);font-weight:700;}
 
-  /* ---------- SPINNER ---------- */
-  .spinner{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    flex-direction:column; gap:10px; color:var(--text-dim); font-size:13px;
-  }
-  .spinner .ring{
-    width:30px; height:30px; border:3px solid var(--line); border-top-color:var(--amber);
-    border-radius:50%; animation:spin 0.8s linear infinite;
-  }
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .hidden{display:none !important;}
+/* sliders section */
+.sliders-section{padding:8px 12px 4px;}
+.slider-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.slider-row label{font-size:11px;color:var(--dim);width:52px;flex:0 0 auto;text-align:right;}
+.slider-row input[type=range]{flex:1;accent-color:var(--amber);height:4px;}
+.slider-row .sv{font-size:11px;color:var(--amber);width:30px;text-align:right;font-family:monospace;}
+
+/* bottom toolbar */
+.viewer-toolbar{flex:0 0 auto;padding:7px 10px calc(7px + var(--sb));
+  display:flex;align-items:center;gap:5px;overflow-x:auto;}
+.viewer-toolbar::-webkit-scrollbar{display:none;}
+.tool-btn{flex:0 0 auto;min-width:54px;height:50px;background:var(--panel2);
+  border:1px solid var(--line);border-radius:9px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;color:var(--dim);}
+.tool-btn .ti{font-size:17px;line-height:1;}
+.tool-btn .tl{font-size:9px;letter-spacing:.02em;}
+.tool-btn.active{background:var(--amberdim);border-color:var(--amber);color:var(--amber);}
+.tool-spacer{flex:1;}
+
+/* spinner */
+.spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;color:var(--dim);font-size:13px;background:#000;}
+.spinner .ring{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--amber);
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* toast */
+.toast{position:fixed;bottom:calc(18px + var(--sb));left:50%;
+  transform:translateX(-50%) translateY(16px);background:var(--panel2);
+  border:1px solid var(--line);color:var(--text);padding:10px 18px;border-radius:10px;
+  font-size:13.5px;z-index:100;opacity:0;transition:all .25s;pointer-events:none;
+  max-width:85vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.err{border-color:var(--danger);color:#f0a89c;}
+.hidden{display:none!important;}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- ================= TOP BAR (persistent) ================= -->
-  <div class="topbar" id="topbar">
-    <div class="brand">
-      <div class="brand-mark"></div>
-      <div>
-        <div class="brand-text">CR Viewer</div>
-        <div class="brand-sub" id="brandSub">Sin configurar</div>
-      </div>
-    </div>
-    <div class="topbar-right">
-      <div class="conn-dot" id="connDot"></div>
-      <button class="icon-btn" id="btnSettings" title="Configuracion" style="width:36px;height:36px;">⚙</button>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <div class="brand-text">CR Viewer</div>
+      <div class="brand-sub" id="brandSub">Sin configurar</div>
     </div>
   </div>
-
-  <!-- ================= SETUP VIEW ================= -->
-  <div class="view" id="view-setup">
-    <div class="setup-card">
-      <div class="field-label">Direccion IP del detector</div>
-      <input class="field-input" id="ipInput" placeholder="192.168.250.135" value="192.168.250.135" inputmode="decimal">
-      <div class="setup-note">
-        Esta es la IP fija del detector EVS en modo CR. <b>No la cambies</b> salvo que tu tecnico te indique otra.
-        La app va a consultar <b>http://[IP]/orderlist.php</b> en la red <b>DETECTOR_AP</b>.
-      </div>
-    </div>
-    <button class="btn btn-primary" id="btnConnect">Conectar y ver pacientes</button>
-    <div class="setup-note" style="text-align:center;">
-      Conectate primero al WiFi <b>DETECTOR_AP</b> desde los ajustes del celular,
-      y desactiva los datos moviles para evitar que el telefono se desconecte.
-    </div>
+  <div class="topbar-right">
+    <div class="conn-dot" id="connDot"></div>
+    <button class="icon-btn" id="btnSettings">⚙</button>
   </div>
-
-  <!-- ================= LIST VIEW ================= -->
-  <div class="view" id="view-list">
-    <div class="list-toolbar">
-      <input class="search-input" id="searchInput" placeholder="Buscar por ID o estudio...">
-      <button class="icon-btn" id="btnRefresh" title="Actualizar">↻</button>
-    </div>
-    <div class="order-list" id="orderList">
-      <div class="empty-state">
-        <div class="glyph">⟳</div>
-        <p>Cargando lista de pacientes...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= VIEWER VIEW ================= -->
-  <div class="view" id="view-viewer">
-    <div class="viewer-topbar">
-      <button class="icon-btn" id="btnBack">←</button>
-      <div class="viewer-title">
-        <div class="vt-id" id="vtId">—</div>
-        <div class="vt-meta" id="vtMeta">—</div>
-      </div>
-      <button class="icon-btn" id="btnInfo" title="Mostrar/ocultar datos">i</button>
-    </div>
-
-    <div class="canvas-wrap" id="canvasWrap">
-      <canvas id="imgCanvas"></canvas>
-      <div class="wl-readout" id="wlReadout">
-        <div><span>W</span> <b id="roW">—</b>&nbsp;&nbsp;<span>L</span> <b id="roL">—</b></div>
-        <div><span>Zoom</span> <b id="roZoom">100%</b></div>
-      </div>
-      <div class="nav-hint" id="navHint">Deslizar izq/der: cambiar imagen</div>
-      <div class="spinner hidden" id="viewerSpinner"><div class="ring"></div><div>Cargando imagen...</div></div>
-    </div>
-
-    <div class="preset-strip" id="presetStrip">
-      <div class="preset-chip" data-preset="auto">Auto</div>
-      <div class="preset-chip" data-preset="soft">Tejido blando</div>
-      <div class="preset-chip" data-preset="bone">Hueso</div>
-      <div class="preset-chip" data-preset="chest">Torax</div>
-      <div class="preset-chip" data-preset="full">Rango completo</div>
-    </div>
-
-    <div class="viewer-toolbar">
-      <div class="tool-btn active" data-tool="wl">
-        <div class="ti">◐</div><div class="tl">Vent/Nivel</div>
-      </div>
-      <div class="tool-btn" data-tool="pan">
-        <div class="ti">✛</div><div class="tl">Mover</div>
-      </div>
-      <div class="tool-btn" id="btnInvert">
-        <div class="ti">◑</div><div class="tl">Invertir</div>
-      </div>
-      <div class="tool-btn" id="btnReset">
-        <div class="ti">↺</div><div class="tl">Reset</div>
-      </div>
-      <div class="tool-btn" id="btnFlipH">
-        <div class="ti">⇋</div><div class="tl">Espejo</div>
-      </div>
-      <div class="tool-btn" id="btnRotate">
-        <div class="ti">↻</div><div class="tl">Rotar</div>
-      </div>
-      <div class="tool-spacer"></div>
-      <div class="tool-btn" id="btnPrev">
-        <div class="ti">‹</div><div class="tl">Anterior</div>
-      </div>
-      <div class="tool-btn" id="btnNext">
-        <div class="ti">›</div><div class="tl">Siguiente</div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
+<!-- SETUP VIEW -->
+<div class="view" id="view-setup">
+  <div class="setup-card">
+    <div class="field-label">IP del detector</div>
+    <input class="field-input" id="ipInput" value="192.168.250.135" inputmode="decimal">
+    <div class="setup-note">
+      Conectate primero al WiFi <b>DETECTOR_AP</b> y desactivá los datos móviles.
+      La IP del detector es fija: <b>192.168.250.135</b>
+    </div>
+  </div>
+  <button class="btn btn-primary" id="btnConnect">Conectar y ver pacientes</button>
+</div>
+
+<!-- LIST VIEW -->
+<div class="view" id="view-list">
+  <div class="list-toolbar">
+    <input class="search-input" id="searchInput" placeholder="Buscar por ID o estudio...">
+    <button class="icon-btn" id="btnRefresh">↻</button>
+  </div>
+  <div class="order-list" id="orderList">
+    <div class="empty-state"><div class="glyph">⟳</div><p>Cargando...</p></div>
+  </div>
+</div>
+
+<!-- VIEWER VIEW -->
+<div class="view" id="view-viewer">
+  <div class="viewer-topbar">
+    <button class="icon-btn" id="btnBack">←</button>
+    <div class="viewer-title">
+      <div class="vt-id" id="vtId">—</div>
+      <div class="vt-meta" id="vtMeta">—</div>
+    </div>
+    <button class="icon-btn" id="btnHud">i</button>
+  </div>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="imgCanvas"></canvas>
+    <div class="hud" id="hud">
+      <div><span>W </span><b id="roW">—</b>&nbsp;&nbsp;<span>L </span><b id="roL">—</b></div>
+      <div><span>USM </span><b id="roUsm">—</b>&nbsp;&nbsp;<span>Zoom </span><b id="roZoom">—</b></div>
+    </div>
+    <div class="spinner" id="spinner"><div class="ring"></div><div>Cargando imagen...</div></div>
+  </div>
+
+  <!-- PROCESSING PANEL -->
+  <div class="proc-panel">
+    <!-- preset chips -->
+    <div class="preset-strip" id="presetStrip">
+      <div class="preset-chip active" data-preset="auto">Auto</div>
+      <div class="preset-chip" data-preset="chest">Tórax PA</div>
+      <div class="preset-chip" data-preset="chestlat">Tórax LAT</div>
+      <div class="preset-chip" data-preset="abd">Abdomen</div>
+      <div class="preset-chip" data-preset="bone">Hueso/Ext.</div>
+      <div class="preset-chip" data-preset="spine">Columna</div>
+      <div class="preset-chip" data-preset="skull">Cráneo</div>
+      <div class="preset-chip" data-preset="raw">Sin procesar</div>
+    </div>
+
+    <!-- sliders -->
+    <div class="sliders-section">
+      <div class="slider-row">
+        <label>Ventana</label>
+        <input type="range" id="slW" min="5" max="255" value="255">
+        <span class="sv" id="svW">255</span>
+      </div>
+      <div class="slider-row">
+        <label>Nivel</label>
+        <input type="range" id="slL" min="0" max="255" value="127">
+        <span class="sv" id="svL">127</span>
+      </div>
+      <div class="slider-row">
+        <label>Realce</label>
+        <input type="range" id="slUsm" min="0" max="100" value="0">
+        <span class="sv" id="svUsm">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM TOOLBAR -->
+  <div class="viewer-toolbar">
+    <div class="tool-btn active" data-tool="wl"><div class="ti">◐</div><div class="tl">Vent/Niv</div></div>
+    <div class="tool-btn" data-tool="pan"><div class="ti">✛</div><div class="tl">Mover</div></div>
+    <div class="tool-btn" id="btnInvert"><div class="ti">◑</div><div class="tl">Invertir</div></div>
+    <div class="tool-btn" id="btnEq"><div class="ti">▤</div><div class="tl">Ecualiz.</div></div>
+    <div class="tool-btn" id="btnReset"><div class="ti">↺</div><div class="tl">Reset</div></div>
+    <div class="tool-btn" id="btnFlip"><div class="ti">⇋</div><div class="tl">Espejo</div></div>
+    <div class="tool-btn" id="btnRot"><div class="ti">↻</div><div class="tl">Rotar</div></div>
+    <div class="tool-spacer"></div>
+    <div class="tool-btn" id="btnPrev"><div class="ti">‹</div><div class="tl">Ant.</div></div>
+    <div class="tool-btn" id="btnNext"><div class="ti">›</div><div class="tl">Sig.</div></div>
+  </div>
+</div>
+
+</div><!-- #app -->
 <div class="toast" id="toast"></div>
 
 <script>
 (function(){
-  "use strict";
+"use strict";
 
-  // ===================== STATE =====================
-  const state = {
-    ip: localStorage.getItem('crv_ip') || '192.168.250.135',
-    orders: [],
-    filteredOrders: [],
-    currentOrderIdx: -1,
-    currentImages: [],
-    currentImageIdx: 0,
-    img: null,            // decoded ImageBitmap / HTMLImageElement
-    imgW: 0, imgH: 0,
-    // window/level in 0-255 terms (source PNGs are 8-bit grayscale already)
-    windowWidth: 255,
-    windowCenter: 127,
-    invert: false,
-    rotation: 0,           // 0/90/180/270
-    flipH: false,
-    zoom: 1,
-    panX: 0, panY: 0,
-    activeTool: 'wl',
-    pollTimer: null,
+// ── STATE ──────────────────────────────────────────────────────────────────
+const S = {
+  ip: localStorage.getItem('crv_ip') || '192.168.250.135',
+  orders:[], filtered:[], orderIdx:-1,
+  images:[], imgIdx:0,
+  // raw pixel buffer of current image (Uint8ClampedArray, RGBA)
+  rawData: null, rawW:0, rawH:0,
+  // processing params
+  ww:255, wl:127,       // window width / window level
+  usmAmount:0,          // unsharp mask 0-100
+  invert:false,
+  equalize:false,
+  rotation:0, flipH:false,
+  zoom:1, panX:0, panY:0,
+  activeTool:'wl',
+  poll:null,
+};
+
+// Anatomical presets — each entry: { ww, wl, usm, eq }
+// Values tuned for 8-bit PNG output from DRTECH EVS series.
+// The key insight: the detector maps its full 16-bit range linearly into 8 bits,
+// so useful signal for radiography typically lives between ~10-120 out of 255.
+// Auto-stretch + anatomy-specific window lifts it dramatically.
+const PRESETS = {
+  auto:     { ww:null, wl:null, usm:20,  eq:false },  // null = auto-stretch
+  chest:    { ww:null, wl:null, usm:15,  eq:false },
+  chestlat: { ww:null, wl:null, usm:18,  eq:false },
+  abd:      { ww:null, wl:null, usm:10,  eq:true  },
+  bone:     { ww:null, wl:null, usm:35,  eq:false },
+  spine:    { ww:null, wl:null, usm:25,  eq:false },
+  skull:    { ww:null, wl:null, usm:28,  eq:false },
+  raw:      { ww:255,  wl:127,  usm:0,   eq:false },
+};
+
+// ── DOM ────────────────────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const views={setup:$('view-setup'),list:$('view-list'),viewer:$('view-viewer')};
+const canvas=$('imgCanvas'), ctx=canvas.getContext('2d',{willReadFrequently:false});
+const canvasWrap=$('canvasWrap');
+
+// ── UTIL ───────────────────────────────────────────────────────────────────
+function toast(msg,err){
+  const el=$('toast');
+  el.textContent=msg; el.className='toast show'+(err?' err':'');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>el.classList.remove('show'),2600);
+}
+function showView(n){Object.values(views).forEach(v=>v.classList.remove('active'));views[n].classList.add('active');}
+function setConn(ok){const d=$('connDot');d.className='conn-dot '+(ok?'ok':'bad');}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function base(){return 'http://'+S.ip;}
+
+// ── SETUP ──────────────────────────────────────────────────────────────────
+$('btnSettings').onclick=()=>{if(S.poll)clearInterval(S.poll);showView('setup');};
+$('btnConnect').onclick=async()=>{
+  const ip=$('ipInput').value.trim();
+  if(!ip){toast('Ingresá una IP',true);return;}
+  S.ip=ip; localStorage.setItem('crv_ip',ip);
+  $('brandSub').textContent=ip;
+  showView('list');
+  await loadList();
+  if(S.poll)clearInterval(S.poll);
+  S.poll=setInterval(loadList,12000);
+};
+
+// ── ORDER LIST ─────────────────────────────────────────────────────────────
+async function loadList(){
+  try{
+    const r=await fetch(base()+'/orderlist.php',{cache:'no-store'});
+    if(!r.ok)throw new Error();
+    const html=await r.text();
+    S.orders=parseOrders(html);
+    applyFilter();
+    setConn(true);
+  }catch{
+    setConn(false);
+    if(!S.orders.length)$('orderList').innerHTML=emptyHTML('⚠','No se pudo conectar. Verificá que estés en la red DETECTOR_AP.');
+  }
+}
+
+function parseOrders(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const rows=[]; let p={};
+  doc.querySelectorAll('tr').forEach(tr=>{
+    const cells=Array.from(tr.querySelectorAll('td')).map(td=>td.textContent.trim());
+    const links=Array.from(tr.querySelectorAll('a'));
+    for(let i=0;i<cells.length;i+=2){
+      const label=(cells[i]||'').toUpperCase(), val=cells[i+1]||'';
+      if(label.startsWith('ID'))p.id=val;
+      else if(label.startsWith('STUDY'))p.study=val;
+      else if(label.startsWith('NAME'))p.name=val;
+      else if(label.startsWith('ACC'))p.acc=val;
+    }
+    links.forEach(a=>{if(a.textContent.trim().toUpperCase()==='XRAY')p.xrayHref=a.getAttribute('href');});
+    cells.forEach(c=>{if(/^\d+$/.test(c))p.count=parseInt(c,10);});
+    if(p.acc&&p.xrayHref){rows.push(p);p={};}
+  });
+  const map=new Map(); rows.forEach(r=>map.set(r.acc,r)); return Array.from(map.values());
+}
+
+function emptyHTML(g,t){return`<div class="empty-state"><div class="glyph">${g}</div><p>${t}</p></div>`;}
+function applyFilter(){
+  const q=$('searchInput').value.trim().toLowerCase();
+  S.filtered=!q?S.orders:S.orders.filter(o=>(o.id||'').toLowerCase().includes(q)||(o.study||'').toLowerCase().includes(q)||(o.acc||'').toLowerCase().includes(q));
+  renderList();
+}
+$('searchInput').oninput=applyFilter;
+$('btnRefresh').onclick=()=>{$('orderList').innerHTML=emptyHTML('⟳','Actualizando...');loadList();};
+
+function renderList(){
+  if(!S.filtered.length){$('orderList').innerHTML=emptyHTML('—','No hay estudios.');return;}
+  $('orderList').innerHTML='';
+  S.filtered.forEach(o=>{
+    const d=document.createElement('div');
+    d.className='order-card';
+    d.innerHTML=`<div class="order-thumb"></div>
+      <div class="order-info">
+        <div class="order-id">${esc(o.id||o.acc||'Paciente')}</div>
+        <div class="order-meta">${esc(o.study||'Sin estudio')} · Acc ${esc(o.acc||'')}</div>
+      </div>
+      <div class="order-count">${o.count??'?'}</div>`;
+    d.onclick=()=>openOrder(o);
+    $('orderList').appendChild(d);
+  });
+}
+
+// ── OPEN ORDER ─────────────────────────────────────────────────────────────
+async function openOrder(order){
+  showView('viewer');
+  $('spinner').classList.remove('hidden');
+  $('vtId').textContent=order.id||order.acc;
+  $('vtMeta').textContent=(order.study||'')+' · Acc '+(order.acc||'');
+  try{
+    const href=order.xrayHref.startsWith('http')?order.xrayHref:(base()+'/'+order.xrayHref.replace(/^\//,''));
+    const r=await fetch(href,{cache:'no-store'});
+    const html=await r.text();
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const imgEl=doc.querySelector('img');
+    let urls=[];
+    if(imgEl){
+      const src=imgEl.getAttribute('src');
+      urls.push(src.startsWith('http')?src:(base()+'/'+src.replace(/^\//,'')));
+    }
+    if(!urls.length)urls.push(href);
+    S.images=urls; S.imgIdx=0;
+    S.orderIdx=S.filtered.indexOf(order);
+    await loadImage(0);
+  }catch{
+    $('spinner').classList.add('hidden');
+    toast('No se pudo cargar la imagen',true);
+  }
+}
+
+// ── IMAGE LOADING & RAW DECODE ─────────────────────────────────────────────
+async function loadImage(idx){
+  if(idx<0||idx>=S.images.length)return;
+  S.imgIdx=idx;
+  $('spinner').classList.remove('hidden');
+  const url=S.images[idx]+(S.images[idx].includes('?')?'&':'?')+'t='+Date.now();
+  try{
+    const blob=await fetch(url,{cache:'no-store'}).then(r=>r.blob());
+    const bmp=await createImageBitmap(blob);
+    // decode to raw RGBA pixel buffer for processing
+    const tmpC=document.createElement('canvas');
+    tmpC.width=bmp.width; tmpC.height=bmp.height;
+    const tmpX=tmpC.getContext('2d',{willReadFrequently:true});
+    tmpX.drawImage(bmp,0,0);
+    const id=tmpX.getImageData(0,0,bmp.width,bmp.height);
+    S.rawData=id.data; S.rawW=bmp.width; S.rawH=bmp.height;
+    setConn(true);
+    applyPreset('auto');  // auto-stretch on every new image
+  }catch{
+    toast('Error cargando imagen',true); setConn(false);
+  }finally{
+    $('spinner').classList.add('hidden');
+  }
+}
+
+// ── IMAGE PROCESSING PIPELINE ──────────────────────────────────────────────
+
+// 1. Auto-stretch: finds p2 and p98 percentile of luminance histogram,
+//    maps that range to [0,255]. Handles the dark/crushed look from linear 16→8 conversion.
+function autoStretch(gray){
+  const hist=new Int32Array(256);
+  for(let i=0;i<gray.length;i++)hist[gray[i]]++;
+  const total=gray.length;
+  const lo=total*0.01, hi=total*0.99;
+  let acc=0, minV=0, maxV=255;
+  for(let i=0;i<256;i++){acc+=hist[i];if(acc>=lo){minV=i;break;}}
+  acc=0;
+  for(let i=255;i>=0;i--){acc+=hist[i];if(acc>=(total-hi)){maxV=i;break;}}
+  if(maxV<=minV)return {minV:0,maxV:255};
+  return {minV,maxV};
+}
+
+// 2. Build window/level LUT on 0-255 input range
+function buildWLlut(ww,wl,invert){
+  const lut=new Uint8ClampedArray(256);
+  const lo=wl-ww/2, range=Math.max(1,ww);
+  for(let i=0;i<256;i++){
+    let v=Math.round(((i-lo)/range)*255);
+    v=Math.min(255,Math.max(0,v));
+    lut[i]=invert?255-v:v;
+  }
+  return lut;
+}
+
+// 3. Histogram equalization (global) for flat/low-contrast images
+function equalizeHist(gray){
+  const hist=new Int32Array(256);
+  for(let i=0;i<gray.length;i++)hist[gray[i]]++;
+  const cdf=new Float32Array(256); let acc=0;
+  const total=gray.length, cdfMin=hist.find(v=>v>0);
+  for(let i=0;i<256;i++){acc+=hist[i];cdf[i]=acc;}
+  const out=new Uint8ClampedArray(gray.length);
+  for(let i=0;i<gray.length;i++){
+    out[i]=Math.round(((cdf[gray[i]]-cdfMin)/(total-cdfMin))*255);
+  }
+  return out;
+}
+
+// 4. Unsharp mask (fast separable box-blur approximation)
+// radius=2 gives edge sharpness similar to EConsole's frequency enhancement
+function unsharpMask(gray,w,h,amount){
+  if(amount<=0)return gray;
+  const radius=2;
+  const blur=boxBlur(gray,w,h,radius);
+  const out=new Uint8ClampedArray(gray.length);
+  const a=amount/100;
+  for(let i=0;i<gray.length;i++){
+    let v=gray[i]+a*(gray[i]-blur[i])*2.5;
+    out[i]=Math.min(255,Math.max(0,Math.round(v)));
+  }
+  return out;
+}
+
+function boxBlur(src,w,h,r){
+  const tmp=new Float32Array(src.length);
+  const out=new Float32Array(src.length);
+  // horizontal pass
+  for(let y=0;y<h;y++){
+    let sum=0,cnt=0;
+    for(let x=0;x<w;x++){
+      sum+=src[y*w+x]; cnt++;
+      if(x>r){sum-=src[y*w+x-r-1];cnt--;}
+      tmp[y*w+x]=sum/cnt;
+    }
+  }
+  // vertical pass
+  for(let x=0;x<w;x++){
+    let sum=0,cnt=0;
+    for(let y=0;y<h;y++){
+      sum+=tmp[y*w+x]; cnt++;
+      if(y>r){sum-=tmp[(y-r-1)*w+x];cnt--;}
+      out[y*w+x]=sum/cnt;
+    }
+  }
+  return out;
+}
+
+// ── MAIN RENDER ────────────────────────────────────────────────────────────
+function render(){
+  if(!S.rawData)return;
+  const w=S.rawW, h=S.rawH, n=w*h;
+
+  // extract luminance channel (PNG from detector is grayscale stored as RGB)
+  let gray=new Uint8ClampedArray(n);
+  for(let i=0;i<n;i++)gray[i]=S.rawData[i*4]; // R channel = luminance
+
+  // step 1: auto-stretch or use manual W/L
+  let ww=S.ww, wl=S.wl;
+  if(ww===null){
+    const {minV,maxV}=autoStretch(gray);
+    ww=maxV-minV; wl=Math.round(minV+ww/2);
+  }
+
+  // step 2: apply W/L LUT
+  const lut=buildWLlut(ww,wl,S.invert);
+  for(let i=0;i<n;i++)gray[i]=lut[gray[i]];
+
+  // step 3: histogram equalization (optional, per preset)
+  if(S.equalize)gray=equalizeHist(gray);
+
+  // step 4: unsharp mask
+  if(S.usmAmount>0)gray=unsharpMask(gray,w,h,S.usmAmount);
+
+  // write processed pixels to output ImageData
+  const outData=new Uint8ClampedArray(n*4);
+  for(let i=0;i<n;i++){
+    const v=gray[i];
+    outData[i*4]=v; outData[i*4+1]=v; outData[i*4+2]=v; outData[i*4+3]=255;
+  }
+
+  // render to a temp canvas, then draw transformed to main canvas
+  const tmpC=document.createElement('canvas');
+  tmpC.width=w; tmpC.height=h;
+  tmpC.getContext('2d').putImageData(new ImageData(outData,w,h),0,0);
+
+  const wrapW=canvasWrap.clientWidth, wrapH=canvasWrap.clientHeight;
+  const rot90=S.rotation===90||S.rotation===270;
+  const srcW=rot90?h:w, srcH=rot90?w:h;
+  const fitScale=Math.min(wrapW/srcW,wrapH/srcH)*S.zoom;
+
+  canvas.width=wrapW; canvas.height=wrapH;
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,wrapW,wrapH);
+  ctx.save();
+  ctx.translate(wrapW/2+S.panX, wrapH/2+S.panY);
+  ctx.rotate(S.rotation*Math.PI/180);
+  if(S.flipH)ctx.scale(-1,1);
+  ctx.drawImage(tmpC,-w*fitScale/2,-h*fitScale/2,w*fitScale,h*fitScale);
+  ctx.restore();
+
+  // update HUD
+  $('roW').textContent=ww===null?'auto':Math.round(ww);
+  $('roL').textContent=wl===null?'auto':Math.round(wl);
+  $('roUsm').textContent=S.usmAmount;
+  $('roZoom').textContent=Math.round(S.zoom*100)+'%';
+}
+
+// ── PRESETS ────────────────────────────────────────────────────────────────
+function applyPreset(name){
+  const p=PRESETS[name]; if(!p)return;
+  S.ww=p.ww; S.wl=p.wl; S.usmAmount=p.usm; S.equalize=p.eq;
+  // sync sliders (use 255/127 as display value when auto)
+  const dispW=p.ww===null?255:p.ww, dispL=p.wl===null?127:p.wl;
+  $('slW').value=dispW; $('svW').textContent=p.ww===null?'auto':dispW;
+  $('slL').value=dispL; $('svL').textContent=p.wl===null?'auto':dispL;
+  $('slUsm').value=p.usm; $('svUsm').textContent=p.usm;
+  document.querySelectorAll('.preset-chip').forEach(c=>c.classList.toggle('active',c.dataset.preset===name));
+  render();
+}
+document.querySelectorAll('.preset-chip').forEach(c=>c.onclick=()=>applyPreset(c.dataset.preset));
+
+// ── SLIDERS ────────────────────────────────────────────────────────────────
+function wireSlider(id,svId,cb){
+  const sl=$(id),sv=$(svId);
+  sl.oninput=()=>{sv.textContent=sl.value; cb(parseInt(sl.value,10));};
+}
+wireSlider('slW','svW',v=>{S.ww=v; document.querySelectorAll('.preset-chip').forEach(c=>c.classList.remove('active')); render();});
+wireSlider('slL','svL',v=>{S.wl=v; document.querySelectorAll('.preset-chip').forEach(c=>c.classList.remove('active')); render();});
+wireSlider('slUsm','svUsm',v=>{S.usmAmount=v; render();});
+
+// ── TOOLBAR BUTTONS ────────────────────────────────────────────────────────
+document.querySelectorAll('.tool-btn[data-tool]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); S.activeTool=b.dataset.tool;
   };
+});
+$('btnInvert').onclick=e=>{S.invert=!S.invert;e.currentTarget.classList.toggle('active',S.invert);render();};
+$('btnEq').onclick=e=>{S.equalize=!S.equalize;e.currentTarget.classList.toggle('active',S.equalize);render();};
+$('btnReset').onclick=()=>{S.zoom=1;S.panX=0;S.panY=0;S.rotation=0;S.flipH=false;applyPreset('auto');toast('Vista restablecida');};
+$('btnFlip').onclick=e=>{S.flipH=!S.flipH;e.currentTarget.classList.toggle('active',S.flipH);render();};
+$('btnRot').onclick=()=>{S.rotation=(S.rotation+90)%360;render();};
+$('btnPrev').onclick=()=>navOrder(-1);
+$('btnNext').onclick=()=>navOrder(1);
+$('btnBack').onclick=()=>showView('list');
+$('btnHud').onclick=()=>$('hud').classList.toggle('hidden');
 
-  // ===================== DOM REFS =====================
-  const $ = (id) => document.getElementById(id);
-  const views = {
-    setup: $('view-setup'),
-    list: $('view-list'),
-    viewer: $('view-viewer'),
-  };
-  const ipInput = $('ipInput');
-  const connDot = $('connDot');
-  const brandSub = $('brandSub');
-  const orderList = $('orderList');
-  const searchInput = $('searchInput');
-  const canvas = $('imgCanvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: false });
-  const canvasWrap = $('canvasWrap');
-  const vtId = $('vtId');
-  const vtMeta = $('vtMeta');
-  const roW = $('roW');
-  const roL = $('roL');
-  const roZoom = $('roZoom');
-  const wlReadout = $('wlReadout');
-  const navHint = $('navHint');
-  const viewerSpinner = $('viewerSpinner');
-  const toastEl = $('toast');
+function navOrder(d){
+  const ni=S.orderIdx+d;
+  if(ni<0||ni>=S.filtered.length){toast(d>0?'Último paciente':'Primer paciente');return;}
+  openOrder(S.filtered[ni]);
+}
 
-  // off-screen canvas to hold the raw decoded pixels at native resolution
-  const rawCanvas = document.createElement('canvas');
-  const rawCtx = rawCanvas.getContext('2d', { willReadFrequently: true });
-
-  // ===================== UTIL =====================
-  function showToast(msg, isError){
-    toastEl.textContent = msg;
-    toastEl.className = 'toast show' + (isError ? ' error' : '');
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => { toastEl.classList.remove('show'); }, 2600);
+// ── TOUCH GESTURES ─────────────────────────────────────────────────────────
+let T=null;
+canvasWrap.addEventListener('touchstart',e=>{
+  if(e.touches.length===1){
+    const t=e.touches[0];
+    T={mode:'1',sx:t.clientX,sy:t.clientY,lx:t.clientX,ly:t.clientY,
+       sWW:S.ww||255,sWL:S.wl||127,sPX:S.panX,sPY:S.panY,moved:false};
+  } else if(e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    T={mode:'2',sd:Math.hypot(dx,dy),sz:S.zoom};
   }
+},{passive:true});
 
-  function showView(name){
-    Object.values(views).forEach(v => v.classList.remove('active'));
-    views[name].classList.add('active');
+canvasWrap.addEventListener('touchmove',e=>{
+  if(!T)return; e.preventDefault();
+  if(T.mode==='1'&&e.touches.length===1){
+    const t=e.touches[0];
+    const dx=t.clientX-T.sx, dy=t.clientY-T.sy;
+    if(Math.abs(dx)>3||Math.abs(dy)>3)T.moved=true;
+    if(S.activeTool==='wl'){
+      S.ww=Math.max(5,T.sWW+dx*1.5);
+      S.wl=Math.max(0,Math.min(255,T.sWL-dy));
+      // update sliders to match
+      $('slW').value=Math.round(S.ww); $('svW').textContent=Math.round(S.ww);
+      $('slL').value=Math.round(S.wl); $('svL').textContent=Math.round(S.wl);
+      document.querySelectorAll('.preset-chip').forEach(c=>c.classList.remove('active'));
+    } else {
+      S.panX=T.sPX+dx; S.panY=T.sPY+dy;
+    }
+    T.lx=t.clientX; T.ly=t.clientY;
+    render();
+  } else if(T.mode==='2'&&e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    S.zoom=Math.max(.3,Math.min(8,T.sz*Math.hypot(dx,dy)/T.sd));
+    render();
   }
+},{passive:false});
 
-  function baseUrl(){
-    return 'http://' + state.ip;
+canvasWrap.addEventListener('touchend',e=>{
+  if(T&&T.mode==='1'){
+    const dx=T.lx-T.sx;
+    if(Math.abs(dx)>90&&Math.abs(T.ly-T.sy)<60){
+      if(dx<0)navOrder(1); else navOrder(-1);
+    }
   }
+  T=null;
+},{passive:true});
 
-  function setConn(ok){
-    connDot.classList.remove('ok','bad');
-    connDot.classList.add(ok ? 'ok' : 'bad');
-  }
+// double-tap reset view
+let lastTap=0;
+canvasWrap.addEventListener('touchend',()=>{
+  const now=Date.now();
+  if(now-lastTap<300){S.zoom=1;S.panX=0;S.panY=0;render();}
+  lastTap=now;
+});
 
-  // ===================== SETUP / CONNECT =====================
-  $('btnSettings').addEventListener('click', () => {
-    if (state.pollTimer) clearInterval(state.pollTimer);
+// mouse support (desktop/testing)
+let MD=false,MX=0,MY=0,MWW=0,MWL=0,MPX=0,MPY=0;
+canvasWrap.addEventListener('mousedown',e=>{
+  MD=true;MX=e.clientX;MY=e.clientY;
+  MWW=S.ww||255;MWL=S.wl||127;MPX=S.panX;MPY=S.panY;
+});
+window.addEventListener('mousemove',e=>{
+  if(!MD)return;
+  const dx=e.clientX-MX,dy=e.clientY-MY;
+  if(S.activeTool==='wl'){S.ww=Math.max(5,MWW+dx*1.5);S.wl=Math.max(0,Math.min(255,MWL-dy));}
+  else{S.panX=MPX+dx;S.panY=MPY+dy;}
+  render();
+});
+window.addEventListener('mouseup',()=>{MD=false;});
+canvasWrap.addEventListener('wheel',e=>{
+  e.preventDefault();
+  S.zoom=Math.max(.3,Math.min(8,S.zoom*(e.deltaY<0?1.1:.9)));
+  render();
+},{passive:false});
+
+window.addEventListener('resize',()=>{if(views.viewer.classList.contains('active'))render();});
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+function init(){
+  $('ipInput').value=S.ip;
+  $('brandSub').textContent=S.ip;
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if(localStorage.getItem('crv_ip')){
+    showView('list'); loadList();
+    S.poll=setInterval(loadList,12000);
+  } else {
     showView('setup');
-  });
-
-  $('btnConnect').addEventListener('click', async () => {
-    const ip = ipInput.value.trim();
-    if (!ip){ showToast('Ingresa una IP valida', true); return; }
-    state.ip = ip;
-    localStorage.setItem('crv_ip', ip);
-    brandSub.textContent = ip;
-    showView('list');
-    await loadOrderList();
-    if (state.pollTimer) clearInterval(state.pollTimer);
-    state.pollTimer = setInterval(loadOrderList, 12000); // gentle background refresh
-  });
-
-  // ===================== LOAD ORDER LIST =====================
-  async function loadOrderList(){
-    try{
-      const res = await fetch(baseUrl() + '/orderlist.php', { cache:'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const html = await res.text();
-      const orders = parseOrderList(html);
-      state.orders = orders;
-      applyFilter();
-      setConn(true);
-    }catch(err){
-      setConn(false);
-      if (state.orders.length === 0){
-        orderList.innerHTML = emptyStateHTML('⚠', 'No se pudo conectar al detector. Verifica que estes conectado a la red DETECTOR_AP y que la IP sea correcta.');
-      }
-    }
   }
-
-  // Parses the orderlist.php table structure shown in the EConsole1 quick guide:
-  // repeating rows of ID / Name / Study / Acc.No / image-count, each with a link to Xray.
-  function parseOrderList(html){
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const rows = [];
-    // The DRTECH orderlist page lays fields out as label/value pairs in table rows.
-    // We scan all table rows and group every 2 (ID/Study) into one order entry.
-    const allRows = Array.from(doc.querySelectorAll('tr'));
-    let pending = {};
-    allRows.forEach(tr => {
-      const cells = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim());
-      const links = Array.from(tr.querySelectorAll('a'));
-      for (let i = 0; i < cells.length; i += 2){
-        const label = (cells[i] || '').toUpperCase();
-        const value = cells[i+1] || '';
-        if (label.startsWith('ID')) pending.id = value;
-        else if (label.startsWith('STUDY')) pending.study = value;
-        else if (label.startsWith('NAME')) pending.name = value;
-        else if (label.startsWith('ACC')) pending.acc = value;
-      }
-      links.forEach(a => {
-        const text = a.textContent.trim().toUpperCase();
-        if (text === 'XRAY'){
-          pending.xrayHref = a.getAttribute('href');
-        }
-      });
-      // count column is often a lone numeric cell
-      cells.forEach(c => {
-        if (/^\d+$/.test(c)) pending.count = parseInt(c, 10);
-      });
-      if (pending.acc && pending.xrayHref){
-        rows.push(pending);
-        pending = {};
-      }
-    });
-    // de-duplicate by accession number, keep last seen
-    const map = new Map();
-    rows.forEach(r => map.set(r.acc, r));
-    return Array.from(map.values());
-  }
-
-  function emptyStateHTML(glyph, text){
-    return `<div class="empty-state"><div class="glyph">${glyph}</div><p>${text}</p></div>`;
-  }
-
-  function applyFilter(){
-    const q = searchInput.value.trim().toLowerCase();
-    state.filteredOrders = !q ? state.orders : state.orders.filter(o =>
-      (o.id||'').toLowerCase().includes(q) ||
-      (o.study||'').toLowerCase().includes(q) ||
-      (o.acc||'').toLowerCase().includes(q)
-    );
-    renderOrderList();
-  }
-  searchInput.addEventListener('input', applyFilter);
-
-  $('btnRefresh').addEventListener('click', () => {
-    orderList.innerHTML = emptyStateHTML('⟳', 'Actualizando...');
-    loadOrderList();
-  });
-
-  function renderOrderList(){
-    if (state.filteredOrders.length === 0){
-      orderList.innerHTML = emptyStateHTML('—', 'No hay estudios que coincidan.');
-      return;
-    }
-    orderList.innerHTML = '';
-    state.filteredOrders.forEach((o, idx) => {
-      const card = document.createElement('div');
-      card.className = 'order-card';
-      card.innerHTML = `
-        <div class="order-thumb"></div>
-        <div class="order-info">
-          <div class="order-id">${escapeHtml(o.id || o.acc || 'Paciente')}</div>
-          <div class="order-meta">${escapeHtml(o.study || 'Sin estudio')} · Acc ${escapeHtml(o.acc || '')}</div>
-        </div>
-        <div class="order-count">${o.count ?? '?'}</div>
-      `;
-      card.addEventListener('click', () => openOrder(o));
-      orderList.appendChild(card);
-    });
-  }
-
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  // ===================== OPEN ORDER -> FETCH IMAGE LIST =====================
-  async function openOrder(order){
-    showView('viewer');
-    viewerSpinner.classList.remove('hidden');
-    vtId.textContent = order.id || order.acc;
-    vtMeta.textContent = (order.study || '') + ' · Acc ' + (order.acc || '');
-
-    try{
-      // The detector's xray link returns the latest image directly; we also try
-      // a numbered series (image_1.png, image_2.png ...) pattern as DRTECH names
-      // files p_[Accession]_[Date]_[Time].img per the quick guide convention.
-      const href = order.xrayHref.startsWith('http') ? order.xrayHref : (baseUrl() + '/' + order.xrayHref.replace(/^\//,''));
-      const res = await fetch(href, { cache:'no-store' });
-      const html = await res.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const imgEl = doc.querySelector('img');
-      const fname = doc.body.textContent.match(/p_[\w\-]+\.(img|png|jpg)/i);
-
-      let urls = [];
-      if (imgEl){
-        const src = imgEl.getAttribute('src');
-        urls.push(src.startsWith('http') ? src : (baseUrl() + '/' + src.replace(/^\//,'')));
-      }
-      if (urls.length === 0 && fname){
-        urls.push(baseUrl() + '/' + fname[0]);
-      }
-      if (urls.length === 0){
-        // fallback: treat the fetched href itself as the image endpoint
-        urls.push(href);
-      }
-      state.currentImages = urls;
-      state.currentImageIdx = 0;
-      state.currentOrderIdx = state.filteredOrders.indexOf(order);
-      await loadImageAt(0);
-    }catch(err){
-      viewerSpinner.classList.add('hidden');
-      showToast('No se pudo cargar la imagen de este paciente', true);
-    }
-  }
-
-  // ===================== IMAGE LOADING =====================
-  async function loadImageAt(idx){
-    if (idx < 0 || idx >= state.currentImages.length) return;
-    state.currentImageIdx = idx;
-    viewerSpinner.classList.remove('hidden');
-    const url = state.currentImages[idx] + (state.currentImages[idx].includes('?') ? '&' : '?') + 't=' + Date.now();
-
-    try{
-      const blob = await fetch(url, { cache:'no-store' }).then(r => r.blob());
-      const bitmap = await createImageBitmap(blob);
-      state.img = bitmap;
-      state.imgW = bitmap.width;
-      state.imgH = bitmap.height;
-
-      rawCanvas.width = bitmap.width;
-      rawCanvas.height = bitmap.height;
-      rawCtx.drawImage(bitmap, 0, 0);
-
-      resetView(true);
-      renderCanvas();
-      setConn(true);
-    }catch(err){
-      showToast('Error cargando la imagen', true);
-      setConn(false);
-    }finally{
-      viewerSpinner.classList.add('hidden');
-    }
-  }
-
-  // ===================== WINDOW / LEVEL RENDER =====================
-  // Re-maps the 8-bit grayscale source through a window/level LUT, mimicking
-  // DICOM-style W/L on a standard PNG. invert flips the LUT direction.
-  function buildLUT(){
-    const lut = new Uint8ClampedArray(256);
-    const lo = state.windowCenter - state.windowWidth / 2;
-    const hi = state.windowCenter + state.windowWidth / 2;
-    const range = Math.max(1, hi - lo);
-    for (let i = 0; i < 256; i++){
-      let v = (i - lo) / range;
-      v = Math.min(1, Math.max(0, v));
-      let out = Math.round(v * 255);
-      if (state.invert) out = 255 - out;
-      lut[i] = out;
-    }
-    return lut;
-  }
-
-  function renderCanvas(){
-    if (!state.img) return;
-    const wrapW = canvasWrap.clientWidth;
-    const wrapH = canvasWrap.clientHeight;
-
-    const rotated90 = state.rotation === 90 || state.rotation === 270;
-    const srcW = rotated90 ? state.imgH : state.imgW;
-    const srcH = rotated90 ? state.imgW : state.imgH;
-
-    const fitScale = Math.min(wrapW / srcW, wrapH / srcH);
-    const drawScale = fitScale * state.zoom;
-
-    canvas.width = wrapW;
-    canvas.height = wrapH;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, wrapW, wrapH);
-
-    // apply W/L via pixel LUT on the raw image data, drawn into a temp canvas
-    const lutCanvas = applyLUTToRaw();
-
-    ctx.save();
-    ctx.translate(wrapW/2 + state.panX, wrapH/2 + state.panY);
-    ctx.rotate(state.rotation * Math.PI / 180);
-    if (state.flipH) ctx.scale(-1, 1);
-    ctx.drawImage(
-      lutCanvas,
-      -state.imgW * drawScale / 2,
-      -state.imgH * drawScale / 2,
-      state.imgW * drawScale,
-      state.imgH * drawScale
-    );
-    ctx.restore();
-
-    roW.textContent = Math.round(state.windowWidth);
-    roL.textContent = Math.round(state.windowCenter);
-    roZoom.textContent = Math.round(state.zoom * 100) + '%';
-  }
-
-  let lutCache = { key:null, canvas:null };
-  function applyLUTToRaw(){
-    const key = state.windowWidth + '|' + state.windowCenter + '|' + state.invert;
-    if (lutCache.key === key && lutCache.canvas) return lutCache.canvas;
-
-    const w = rawCanvas.width, h = rawCanvas.height;
-    const imageData = rawCtx.getImageData(0, 0, w, h);
-    const data = imageData.data;
-    const lut = buildLUT();
-
-    for (let i = 0; i < data.length; i += 4){
-      // source is grayscale already (R=G=B typically); use R channel as luminance
-      const v = data[i];
-      const out = lut[v];
-      data[i] = out; data[i+1] = out; data[i+2] = out;
-    }
-
-    const tmp = document.createElement('canvas');
-    tmp.width = w; tmp.height = h;
-    tmp.getContext('2d').putImageData(imageData, 0, 0);
-
-    lutCache = { key, canvas: tmp };
-    return tmp;
-  }
-
-  function resetView(keepWL){
-    state.zoom = 1;
-    state.panX = 0;
-    state.panY = 0;
-    state.rotation = 0;
-    state.flipH = false;
-    if (!keepWL){
-      state.windowWidth = 255;
-      state.windowCenter = 127;
-      state.invert = false;
-    } else {
-      applyPreset('auto');
-    }
-  }
-
-  // ===================== PRESETS =====================
-  // Window/Level presets in 0-255 terms, tuned for typical 8-bit exported
-  // radiographs (full dynamic range, since the source is already processed PNG).
-  const PRESETS = {
-    auto:  { ww: 255, wl: 127 },
-    soft:  { ww: 180, wl: 110 },
-    bone:  { ww: 230, wl: 170 },
-    chest: { ww: 255, wl: 100 },
-    full:  { ww: 255, wl: 127 },
-  };
-  function applyPreset(name){
-    const p = PRESETS[name];
-    if (!p) return;
-    state.windowWidth = p.ww;
-    state.windowCenter = p.wl;
-    document.querySelectorAll('.preset-chip').forEach(c => c.classList.toggle('active', c.dataset.preset === name));
-    renderCanvas();
-  }
-  document.querySelectorAll('.preset-chip').forEach(chip => {
-    chip.addEventListener('click', () => applyPreset(chip.dataset.preset));
-  });
-
-  // ===================== TOOLBAR =====================
-  document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      state.activeTool = btn.dataset.tool;
-    });
-  });
-
-  $('btnInvert').addEventListener('click', (e) => {
-    state.invert = !state.invert;
-    e.currentTarget.classList.toggle('active', state.invert);
-    renderCanvas();
-  });
-
-  $('btnReset').addEventListener('click', () => {
-    resetView(true);
-    renderCanvas();
-    showToast('Vista restablecida');
-  });
-
-  $('btnFlipH').addEventListener('click', (e) => {
-    state.flipH = !state.flipH;
-    e.currentTarget.classList.toggle('active', state.flipH);
-    renderCanvas();
-  });
-
-  $('btnRotate').addEventListener('click', () => {
-    state.rotation = (state.rotation + 90) % 360;
-    renderCanvas();
-  });
-
-  $('btnPrev').addEventListener('click', () => navigateOrder(-1));
-  $('btnNext').addEventListener('click', () => navigateOrder(1));
-
-  $('btnBack').addEventListener('click', () => {
-    showView('list');
-  });
-
-  $('btnInfo').addEventListener('click', () => {
-    wlReadout.classList.toggle('hidden');
-  });
-
-  function navigateOrder(dir){
-    const newIdx = state.currentOrderIdx + dir;
-    if (newIdx < 0 || newIdx >= state.filteredOrders.length){
-      showToast(dir > 0 ? 'No hay mas pacientes' : 'Este es el primer paciente');
-      return;
-    }
-    openOrder(state.filteredOrders[newIdx]);
-  }
-
-  // ===================== TOUCH GESTURES =====================
-  // One-finger drag = window/level (when tool=wl) or pan (when tool=pan).
-  // Two-finger pinch = zoom. Horizontal swipe near edges = navigate patients.
-  let touchState = null;
-
-  canvasWrap.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1){
-      const t = e.touches[0];
-      touchState = {
-        mode: 'single',
-        startX: t.clientX, startY: t.clientY,
-        lastX: t.clientX, lastY: t.clientY,
-        startWW: state.windowWidth, startWL: state.windowCenter,
-        startPanX: state.panX, startPanY: state.panY,
-        moved: false,
-      };
-    } else if (e.touches.length === 2){
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      touchState = {
-        mode: 'pinch',
-        startDist: Math.hypot(dx, dy),
-        startZoom: state.zoom,
-      };
-    }
-  }, { passive:true });
-
-  canvasWrap.addEventListener('touchmove', (e) => {
-    if (!touchState) return;
-    e.preventDefault();
-
-    if (touchState.mode === 'single' && e.touches.length === 1){
-      const t = e.touches[0];
-      const dx = t.clientX - touchState.startX;
-      const dy = t.clientY - touchState.startY;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) touchState.moved = true;
-
-      if (state.activeTool === 'wl'){
-        // horizontal drag = window width, vertical drag = window level (DICOM convention)
-        state.windowWidth = Math.max(5, touchState.startWW + dx * 1.5);
-        state.windowCenter = Math.max(0, Math.min(255, touchState.startWL - dy * 1.0));
-        renderCanvas();
-      } else if (state.activeTool === 'pan'){
-        state.panX = touchState.startPanX + dx;
-        state.panY = touchState.startPanY + dy;
-        renderCanvas();
-      }
-      touchState.lastX = t.clientX;
-      touchState.lastY = t.clientY;
-    } else if (touchState.mode === 'pinch' && e.touches.length === 2){
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.hypot(dx, dy);
-      const scale = dist / touchState.startDist;
-      state.zoom = Math.max(0.3, Math.min(8, touchState.startZoom * scale));
-      renderCanvas();
-    }
-  }, { passive:false });
-
-  canvasWrap.addEventListener('touchend', (e) => {
-    if (touchState && touchState.mode === 'single' && !touchState.moved){
-      // tap with no movement: treat as nothing special, reserved for future use
-    }
-    if (touchState && touchState.mode === 'single'){
-      const dx = touchState.lastX - touchState.startX;
-      // strong horizontal swipe in pan mode -> change patient
-      if (Math.abs(dx) > 90 && Math.abs(touchState.lastY - touchState.startY) < 60){
-        navHint.classList.add('show');
-        setTimeout(() => navHint.classList.remove('show'), 1200);
-        if (dx < 0) navigateOrder(1); else navigateOrder(-1);
-      }
-    }
-    touchState = null;
-  }, { passive:true });
-
-  // double-tap to reset
-  let lastTap = 0;
-  canvasWrap.addEventListener('touchend', () => {
-    const now = Date.now();
-    if (now - lastTap < 300){
-      resetView(true);
-      renderCanvas();
-    }
-    lastTap = now;
-  });
-
-  // mouse support for desktop/testing
-  let mouseDown = false, mStartX=0, mStartY=0, mStartWW=0, mStartWL=0, mStartPanX=0, mStartPanY=0;
-  canvasWrap.addEventListener('mousedown', (e) => {
-    mouseDown = true;
-    mStartX = e.clientX; mStartY = e.clientY;
-    mStartWW = state.windowWidth; mStartWL = state.windowCenter;
-    mStartPanX = state.panX; mStartPanY = state.panY;
-  });
-  window.addEventListener('mousemove', (e) => {
-    if (!mouseDown) return;
-    const dx = e.clientX - mStartX, dy = e.clientY - mStartY;
-    if (state.activeTool === 'wl'){
-      state.windowWidth = Math.max(5, mStartWW + dx * 1.5);
-      state.windowCenter = Math.max(0, Math.min(255, mStartWL - dy * 1.0));
-    } else {
-      state.panX = mStartPanX + dx;
-      state.panY = mStartPanY + dy;
-    }
-    renderCanvas();
-  });
-  window.addEventListener('mouseup', () => { mouseDown = false; });
-  canvasWrap.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    state.zoom = Math.max(0.3, Math.min(8, state.zoom * (e.deltaY < 0 ? 1.1 : 0.9)));
-    renderCanvas();
-  }, { passive:false });
-
-  window.addEventListener('resize', () => { if (views.viewer.classList.contains('active')) renderCanvas(); });
-
-  // ===================== INIT =====================
-  function init(){
-    ipInput.value = state.ip;
-    brandSub.textContent = state.ip;
-    if ('serviceWorker' in navigator){
-      navigator.serviceWorker.register('sw.js').catch(()=>{});
-    }
-    // If we already have a saved IP, jump straight to list for faster repeat use.
-    if (localStorage.getItem('crv_ip')){
-      showView('list');
-      loadOrderList();
-      state.pollTimer = setInterval(loadOrderList, 12000);
-    } else {
-      showView('setup');
-    }
-  }
-  init();
+}
+init();
 })();
 </script>
 </body>
